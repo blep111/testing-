@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Matrix TempMail + Proxy</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <div class="matrix-glow">
+    <h1>☣ Matrix TempMail + Proxy Checker ☣</h1>
+
+    <div class="card">
+      <h2>Check Proxies</h2>
+      <textarea id="proxies" placeholder="Paste proxies (one per line)"></textarea>
+      <button onclick="checkProxies()">Check</button>
+      <pre id="results"></pre>
+    </div>
+
+    <div class="card">
+      <h2>Generate Temp Email</h2>
+      <button onclick="genEmail()">Generate</button>
+      <pre id="emailResult"></pre>
+    </div>
+  </div>
+
+  <script>
+    async function checkProxies() {
+      const input = document.getElementById('proxies').value;
+      const list = input.trim().split('\\n');
+      const res = await fetch('/check_proxies', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ proxies: list })
+      });
+      const data = await res.json();
+      document.getElementById('results').textContent = JSON.stringify(data, null, 2);
+    }
+
+    async function genEmail() {
+      const res = await fetch('/generate_email');
+      const data = await res.json();
+      document.getElementById('emailResult').textContent = JSON.stringify(data, null, 2);
+    }
+  </script>
+</body>
+</html>
