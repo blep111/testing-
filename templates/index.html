@@ -2,34 +2,15 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>FB Account Generator</title>
-  <style>
-    body { font-family: monospace; background: black; color: #00ffcc; text-align: center; padding: 30px; }
-    input, button { padding: 10px; font-size: 16px; }
-    .result { margin-top: 20px; border-top: 1px solid #00ffcc; padding-top: 20px; }
-  </style>
+  <title>FB Auto Account Generator</title>
 </head>
 <body>
-  <h1>Facebook Account Generator</h1>
+  <h2>Facebook Account Generator</h2>
   <form method="POST">
     <label>How many accounts?</label>
-    <input type="number" name="count" min="1" value="1" required>
+    <input type="number" name="amount" min="1" value="1" required>
     <button type="submit">Generate</button>
   </form>
-  {% if results %}
-    <div class="result">
-      <h2>Generated Accounts</h2>
-      <ul>
-        {% for acc in results %}
-          <li>
-            <strong>Email:</strong> {{ acc.email }} |
-            <strong>Password:</strong> {{ acc.password }} |
-            <strong>Name:</strong> {{ acc.name }} |
-            <strong>Birthday:</strong> {{ acc.birthday }}
-          </li>
-        {% endfor %}
-      </ul>
-    </div>
-  {% endif %}
+  <div style="margin-top: 20px;">{{ message|safe }}</div>
 </body>
 </html>
