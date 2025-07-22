@@ -4,116 +4,83 @@ from queue import Queue
 import requests
 import random
 import string
-import json
-import hashlib
 from faker import Faker
+import hashlib
 
 app = Flask(__name__)
+fake = Faker()
 
-# ---------------------- Helpers ----------------------
 def generate_random_string(length):
-    chars = string.ascii_letters + string.digits
-    return ''.join(random.choice(chars) for _ in range(length))
+    return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
 
 def get_mail_domains(proxy=None):
     url = "https://api.mail.tm/domains"
     try:
-        response = requests.get(url, proxies=proxy, timeout=10)
+        response = requests.get(url, proxies=proxy)
         if response.status_code == 200:
             return response.json()['hydra:member']
+        else:
+            return None
     except:
         return None
-    return None
 
 def create_mail_tm_account(proxy=None):
-    fake = Faker()
     mail_domains = get_mail_domains(proxy)
-    if not mail_domains:
-        return None
-    domain = random.choice(mail_domains)['domain']
-    username = generate_random_string(10)
-    password = fake.password()
-    data = {
-        "address": f"{username}@{domain}",
-        "password": password
-    }
-    try:
-        res = requests.post("https://api.mail.tm/accounts", json=data, proxies=proxy, timeout=10)
-        if res.status_code == 201:
-            return username + '@' + domain, password, fake.first_name(), fake.last_name(), fake.date_of_birth(minimum_age=18, maximum_age=45)
-    except:
-        return None
-    return None
-
-def _call(url, params, proxy=None):
-    headers = {
-        'User-Agent': '[FBAN/FB4A;FBAV/35.0.0.48.273;FBLC/en_US;FBDV/Nexus 7;]'
-    }
-    try:
-        response = requests.post(url, data=params, headers=headers, proxies=proxy, timeout=10)
-        return response.json()
-    except:
-        return {}
+    if mail_domains:
+        domain = random.choice(mail_domains)['domain']
+        username = generate_random_string(10)
+        password = fake.password()
+        birthday = fake.date_of_birth(minimum_age=18, maximum_age=45)
+        first_name = fake.first_name()
+        last_name = fake.last_name()
+        url = "https://api.mail.tm/accounts"
+        headers = {"Content-Type": "application/json"}
+        data = {"address": f"{username}@{domain}", "password": password}
+        try:
+            response = requests.post(url, headers=headers, json=data, proxies=proxy)
+            if response.status_code == 201:
+                return f"{username}@{domain}", password, first_name, last_name, birthday
+        except:
+            return None, None, None, None, None
+    return None, None, None, None, None
 
 def register_facebook_account(email, password, first_name, last_name, birthday, proxy=None):
     api_key = '882a8490361da98702bf97a021ddc14d'
     secret = '62f8ce9f74b12f84c123cc23437a4a32'
     gender = random.choice(['M', 'F'])
     req = {
-        'api_key': api_key,
-        'attempt_login': True,
-        'birthday': birthday.strftime('%Y-%m-%d'),
-        'client_country_code': 'EN',
-        'fb_api_caller_class': 'com.facebook.registration.protocol.RegisterAccountMethod',
-        'fb_api_req_friendly_name': 'registerAccount',
-        'firstname': first_name,
-        'format': 'json',
-        'gender': gender,
-        'lastname': last_name,
-        'email': email,
-        'locale': 'en_US',
-        'method': 'user.register',
-        'password': password,
-        'reg_instance': generate_random_string(32),
+        'api_key': api_key, 'attempt_login': True, 'birthday': birthday.strftime('%Y-%m-%d'),
+        'client_country_code': 'EN', 'fb_api_caller_class': 'com.facebook.registration.protocol.RegisterAccountMethod',
+        'fb_api_req_friendly_name': 'registerAccount', 'firstname': first_name, 'format': 'json',
+        'gender': gender, 'lastname': last_name, 'email': email, 'locale': 'en_US',
+        'method': 'user.register', 'password': password, 'reg_instance': generate_random_string(32),
         'return_multiple_errors': True
     }
-
-    sig = ''.join(f'{k}={v}' for k, v in sorted(req.items()))
-    req['sig'] = hashlib.md5((sig + secret).encode()).hexdigest()
-
-    result = _call('https://b-api.facebook.com/method/user.register', req, proxy)
-    return {
-        "email": email,
-        "password": password,
-        "name": f"{first_name} {last_name}",
-        "birthday": str(birthday),
-        "gender": gender,
-        "result": result
+    sorted_req = sorted(req.items(), key=lambda x: x[0])
+    sig = ''.join(f'{k}={v}' for k, v in sorted_req)
+    ensig = hashlib.md5((sig + secret).encode()).hexdigest()
+    req['sig'] = ensig
+    headers = {
+        'User-Agent': '[FBAN/FB4A;FBAV/35.0.0.48.273;FBDM/{density=1.3,width=800,height=1205};FBLC/en_US;FBCR/;FBPN/com.facebook.katana;FBDV/Nexus 7;FBSV/4.1.1;FBBK/0;]'
     }
+    response = requests.post('https://b-api.facebook.com/method/user.register', data=req, headers=headers, proxies=proxy)
+    reg = response.json()
+    return reg.get('new_user_id'), reg.get('session_info', {}).get('access_token')
 
-def load_proxies():
-    try:
-        with open("proxies.txt") as f:
-            return [{"http": f"http://{line.strip()}"} for line in f.readlines()]
-    except:
-        return []
-
-# ---------------------- Flask Routes ----------------------
 @app.route("/", methods=["GET", "POST"])
 def index():
+    message = ""
     if request.method == "POST":
-        count = int(request.form.get("count"))
-        proxies = load_proxies()
-        accounts = []
-        for _ in range(count):
-            proxy = random.choice(proxies) if proxies else None
-            data = create_mail_tm_account(proxy)
-            if data:
-                email, pw, fn, ln, bd = data
-                acc = register_facebook_account(email, pw, fn, ln, bd, proxy)
-                accounts.append(acc)
-        return render_template("index.html", results=accounts)
-    return render_template("index.html")
+        amount = int(request.form.get("amount", 1))
+        proxy_list = open("proxies.txt").read().splitlines()
+        for _ in range(amount):
+            proxy = random.choice(proxy_list).strip()
+            proxy_dict = {"http": f"http://{proxy}"}
+            email, password, fname, lname, birthday = create_mail_tm_account(proxy_dict)
+            if email:
+                user_id, token = register_facebook_account(email, password, fname, lname, birthday, proxy_dict)
+                message += f"Generated: {email} | ID: {user_id} | Token: {token}<br>"
+            else:
+                message += "Failed to generate account.<br>"
+    return render_template("index.html", message=message)
 
-if __name__ == "__main__":
-    app.run(debug=True)
