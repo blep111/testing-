@@ -1,46 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Matrix TempMail + Proxy</title>
-  <link rel="stylesheet" href="/static/vern.css" />
+  <meta charset="UTF-8">
+  <title>FB Account Generator</title>
+  <style>
+    body { font-family: monospace; background: black; color: #00ffcc; text-align: center; padding: 30px; }
+    input, button { padding: 10px; font-size: 16px; }
+    .result { margin-top: 20px; border-top: 1px solid #00ffcc; padding-top: 20px; }
+  </style>
 </head>
 <body>
-  <div class="matrix-glow">
-    <h1>☣ Matrix TempMail + Proxy Checker ☣</h1>
-
-    <div class="card">
-      <h2>Check Proxies</h2>
-      <textarea id="proxies" placeholder="Paste proxies (one per line)"></textarea>
-      <button onclick="checkProxies()">Check</button>
-      <pre id="results"></pre>
+  <h1>Facebook Account Generator</h1>
+  <form method="POST">
+    <label>How many accounts?</label>
+    <input type="number" name="count" min="1" value="1" required>
+    <button type="submit">Generate</button>
+  </form>
+  {% if results %}
+    <div class="result">
+      <h2>Generated Accounts</h2>
+      <ul>
+        {% for acc in results %}
+          <li>
+            <strong>Email:</strong> {{ acc.email }} |
+            <strong>Password:</strong> {{ acc.password }} |
+            <strong>Name:</strong> {{ acc.name }} |
+            <strong>Birthday:</strong> {{ acc.birthday }}
+          </li>
+        {% endfor %}
+      </ul>
     </div>
-
-    <div class="card">
-      <h2>Generate Temp Email</h2>
-      <button onclick="genEmail()">Generate</button>
-      <pre id="emailResult"></pre>
-    </div>
-  </div>
-
-  <script>
-    async function checkProxies() {
-      const input = document.getElementById('proxies').value;
-      const list = input.trim().split('\\n');
-      const res = await fetch('/check_proxies', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ proxies: list })
-      });
-      const data = await res.json();
-      document.getElementById('results').textContent = JSON.stringify(data, null, 2);
-    }
-
-    async function genEmail() {
-      const res = await fetch('/generate_email');
-      const data = await res.json();
-      document.getElementById('emailResult').textContent = JSON.stringify(data, null, 2);
-    }
-  </script>
+  {% endif %}
 </body>
 </html>
