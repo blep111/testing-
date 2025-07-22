@@ -1,0 +1,63 @@
+body {
+  background: black;
+  color: #00ffcc;
+  font-family: monospace;
+  display: flex;
+  justify-content: center;
+  padding: 40px;
+}
+
+.matrix-glow {
+  text-align: center;
+  width: 100%;
+  max-width: 800px;
+  animation: glow 3s infinite alternate;
+}
+
+.card {
+  background: rgba(0, 255, 170, 0.05);
+  border: 1px solid #00ffcc88;
+  padding: 20px;
+  margin: 20px auto;
+  border-radius: 12px;
+  box-shadow: 0 0 15px #00ffcc;
+}
+
+textarea {
+  width: 100%;
+  height: 120px;
+  background: black;
+  color: #0f0;
+  border: 1px solid #00ffcc;
+  padding: 10px;
+  resize: vertical;
+}
+
+button {
+  background: #00ffcc;
+  border: none;
+  padding: 10px 20px;
+  color: black;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 10px;
+  border-radius: 6px;
+}
+
+pre {
+  text-align: left;
+  background: #002f2f;
+  padding: 10px;
+  overflow-x: auto;
+  border: 1px solid #00ffcc44;
+  margin-top: 10px;
+}
+
+@keyframes glow {
+  from {
+    text-shadow: 0 0 5px #00ffcc, 0 0 10px #00ffcc;
+  }
+  to {
+    text-shadow: 0 0 20px #00ffcc, 0 0 40px #00ffcc;
+  }
+}
